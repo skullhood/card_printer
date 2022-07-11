@@ -118,8 +118,7 @@ processing_status_var = StringVar()
 processing_status_var.set("Waiting...")
 
 #print cards action for button
-@async_handler
-async def print_cards_action():
+def print_cards_action():
     global source_var
     global card_list_text
     global scaling_value_str
@@ -174,5 +173,4 @@ label.grid(row=next_grid_row(), column=0, columnspan=4)
 #Start window at the center of the screen
 window.title(WINDOW_TITLE)
 window.geometry('{}x{}+{}+{}'.format(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_X_POS, WINDOW_Y_POS))
-async_mainloop(window)
-
+window.mainloop()
