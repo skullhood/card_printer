@@ -85,7 +85,7 @@ label.grid(row=current_grid_row, column=2)
 
 #scaling entry
 scaling_value_str = StringVar()
-scaling_value_str.set("1.0")
+scaling_value_str.set("1.05")
 scaling_entry = Entry(frame, textvariable=scaling_value_str, width=4)
 scaling_entry.grid(row=current_grid_row, column=3, sticky=W)
 

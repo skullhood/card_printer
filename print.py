@@ -54,7 +54,7 @@ def print_cards(print_options: PrintOptions, processing_status_var: StringVar):
             card_directory = find_card_path(print_options.source_directory, card_name)
             #if we found the card directory, add it to the list
             if(card_directory != None):
-                card_directories.append(card_directory)
+                card_directories.append((card_directory, card_dict[card_name]))
                 #get all image files in the directory
                 image_files = os.listdir(card_directory)
                 #for each image file, load it and measure its width and height
@@ -119,69 +119,74 @@ def print_cards(print_options: PrintOptions, processing_status_var: StringVar):
     processing_status_var.set("Building sheet {} of {}...".format(sheet_number, math.ceil(card_dict['total']/cards_per_page)))
 
     #arrange cards in base image
-    for card_directory in card_directories:
+    for tuple in card_directories:
         print("Processing card directory: " + card_directory)
-        #get all image files in the directory
-        image_files = os.listdir(card_directory)
-        #if we have more than one image file, we need to print the second one on the background
-        if(len(image_files) > 1):
-            background_should_print = True
-            #load and paste first image file into base image
-            image_path = card_directory + "/" + image_files[0]
-            image = Image.open(image_path)
-            #only resize if resize value is not 1
-            if(print_options.card_scaling != 1.0):
-                image = image.resize((card_resize_width, card_resize_height), Image.ANTIALIAS)
-            base_image.paste(image, (card_x_offset, card_y_offset))
-            #load and paste second image file into background image
-            image_path = card_directory + "/" + image_files[1]
-            image = Image.open(image_path)
-            if(print_options.card_scaling != 1.0):
-                image = image.resize((card_resize_width, card_resize_height), Image.ANTIALIAS)
-            background_image.paste(image, (card_x_offset, card_y_offset))
-        else:
-            #load and paste image file into base image
-            image_path = card_directory + "/" + image_files[0]
-            image = Image.open(image_path)
-            if(print_options.card_scaling != 1.0):
-                image = image.resize((card_resize_width, card_resize_height), Image.ANTIALIAS)
-            base_image.paste(image, (card_x_offset, card_y_offset))
-        #increment card column and row
-        card_column += 1
-        #update card x and y offsets
-        card_x_offset = (card_column * card_resize_width)
-        #add card spacing to x offset per column
-        card_x_offset += print_options.card_spacing * (card_column + 1)
+        card_directory = tuple[0]
+        card_count = tuple[1]
+        while(card_count > 0):
+            print("copy 1")
+            #get all image files in the directory
+            image_files = os.listdir(card_directory)
+            #if we have more than one image file, we need to print the second one on the background
+            if(len(image_files) > 1):
+                background_should_print = True
+                #load and paste first image file into base image
+                image_path = card_directory + "/" + image_files[0]
+                image = Image.open(image_path)
+                #only resize if resize value is not 1
+                if(print_options.card_scaling != 1.0):
+                    image = image.resize((card_resize_width, card_resize_height), Image.ANTIALIAS)
+                base_image.paste(image, (card_x_offset, card_y_offset))
+                #load and paste second image file into background image
+                image_path = card_directory + "/" + image_files[1]
+                image = Image.open(image_path)
+                if(print_options.card_scaling != 1.0):
+                    image = image.resize((card_resize_width, card_resize_height), Image.ANTIALIAS)
+                background_image.paste(image, (card_x_offset, card_y_offset))
+            else:
+                #load and paste image file into base image
+                image_path = card_directory + "/" + image_files[0]
+                image = Image.open(image_path)
+                if(print_options.card_scaling != 1.0):
+                    image = image.resize((card_resize_width, card_resize_height), Image.ANTIALIAS)
+                base_image.paste(image, (card_x_offset, card_y_offset))
+            #increment card column and row
+            card_column += 1
+            #update card x and y offsets
+            card_x_offset = (card_column * card_resize_width)
+            #add card spacing to x offset per column
+            card_x_offset += print_options.card_spacing * (card_column + 1)
 
-        if(card_column == 3):
-            card_column = 0
-            card_row += 1
-            card_x_offset = (card_column * card_resize_width) + print_options.card_spacing
-            card_y_offset = (card_row * card_resize_height)
-            #add card spacing to y offset per row
-            card_y_offset += print_options.card_spacing * (card_row + 1)
-            #if we are on the last row, finish the page
-            if(card_row == 3):
+            if(card_column == 3):
                 card_column = 0
-                card_row = 0
+                card_row += 1
                 card_x_offset = (card_column * card_resize_width) + print_options.card_spacing
-                card_y_offset = (card_row * card_resize_height) + print_options.card_spacing
-                #print base image
-                base_image.save(specific_print_directory + "/page" + str(sheet_number) + ".png")
-                #print background image if we need to
-                if(background_should_print):
+                card_y_offset = (card_row * card_resize_height)
+                #add card spacing to y offset per row
+                card_y_offset += print_options.card_spacing * (card_row + 1)
+                #if we are on the last row, finish the page
+                if(card_row == 3):
+                    card_column = 0
+                    card_row = 0
+                    card_x_offset = (card_column * card_resize_width) + print_options.card_spacing
+                    card_y_offset = (card_row * card_resize_height) + print_options.card_spacing
+                    #print base image
+                    base_image.save(specific_print_directory + "/page" + str(sheet_number) + ".png")
+                    #print background image if we need to
+                    if(background_should_print):
+                        sheet_number += 1
+                        background_image.save(specific_print_directory + "/page" + str(sheet_number) + ".png")
+                    #reset base image
+                    base_image = Image.new('RGB', (page_width, page_height), (255, 255, 255))
+                    #reset background image
+                    background_image = Image.new('RGB', (page_width, page_height), (255, 255, 255))
+                    #reset background flag
+                    background_should_print = False
+                    #increment sheet number
                     sheet_number += 1
-                    background_image.save(specific_print_directory + "/page" + str(sheet_number) + ".png")
-                #reset base image
-                base_image = Image.new('RGB', (page_width, page_height), (255, 255, 255))
-                #reset background image
-                background_image = Image.new('RGB', (page_width, page_height), (255, 255, 255))
-                #reset background flag
-                background_should_print = False
-                #increment sheet number
-                sheet_number += 1
-                processing_status_var.set("Building sheet {} of {}...".format(sheet_number, math.ceil(card_dict['total']/cards_per_page)))
-
+                    processing_status_var.set("Building sheet {} of {}...".format(sheet_number, math.ceil(card_dict['total']/cards_per_page)))
+        
+            card_count -= 1
     #print last page if we didn't finish on the last row and last column
     if(card_row <= 2 and card_column <= 2):
         sheet_number += 1
